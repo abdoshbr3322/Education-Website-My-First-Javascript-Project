@@ -23,6 +23,8 @@ menuWrappers.forEach((wrapper) => {
   });
 });
 
+// Fix Features Section
+
 let featBoxs = document.querySelectorAll(".features .info .feat");
 let featuresMettingSection = document.querySelector(".features-meetings");
 
@@ -33,112 +35,175 @@ function fixFeatures() {
 fixFeatures();
 window.onresize = fixFeatures;
 
+// Make Sliders
+
 let sliders = document.querySelectorAll(".slider");
-let slideBtns = document.querySelectorAll(".slider .btn");
-let touchStarted = false;
-let starterPosition = 0;
-let totalAmount = 0;
-let amountScrolled = 0;
+let slideBtns = document.querySelectorAll(".btns-container .btn");
 let counters = {};
+let prevTime = 0;
+let starterPosition = 0;
+let touchStarted = false;
+let amountScrolled = 0;
 
 for (let i = 0; i < sliders.length; i++) {
   counters[i] = 0;
-  let boxWidth = sliders[i].lastElementChild.getBoundingClientRect().width;
   let clonedBoxs = sliders[i].querySelectorAll(".box.cloned");
+  let sliderBoxs = sliders[i].querySelectorAll(".box");
+  let boxWidth = sliders[i].lastElementChild.getBoundingClientRect().width;
   fixSlider(sliders[i], clonedBoxs.length, i);
   window.addEventListener("resize", () =>
     fixSlider(sliders[i], clonedBoxs.length, i)
   );
+  requestAnimationFrame(
+    slideAfterDelay(sliders[i], sliderBoxs, clonedBoxs, boxWidth)
+  );
+
+  // Handle Touch Events
+  sliders[i].ontouchstart = (e) => {
+    let touch = e.changedTouches[0];
+    starterPosition = touch.screenX;
+    touchStarted = true;
+    sliders[i].style.cursor = "grabbing";
+  };
+  sliders[i].ontouchmove = (e) => {
+    if (touchStarted) {
+      let touch = e.changedTouches[0];
+      amountScrolled = touch.screenX - starterPosition;
+      touchMove(sliders[i], counters[i], amountScrolled, clonedBoxs, boxWidth);
+    }
+  };
+  sliders[i].ontouchend = () => {
+    touchEnd(sliders[i], amountScrolled, clonedBoxs, boxWidth, sliderBoxs, i);
+  };
+
+  // Handle Mouse Events
+  sliders[i].onmousedown = (e) => {
+    starterPosition = e.screenX;
+    touchStarted = true;
+    sliders[i].style.cursor = "grabbing";
+  };
+  sliders[i].onmousemove = (e) => {
+    if (touchStarted) {
+      sliders[i].style.cursor = "grabbing";
+      amountScrolled = e.screenX - starterPosition;
+      touchMove(sliders[i], counters[i], amountScrolled, clonedBoxs, boxWidth);
+    }
+  };
+  sliders[i].onmouseup = () => {
+    touchEnd(sliders[i], amountScrolled, clonedBoxs, boxWidth, sliderBoxs, i);
+  };
+}
+
+function touchMove(slider, counter, amountScrolled, clonedBoxs, boxWidth) {
+  let clonedLength = clonedBoxs.length;
+  slider.style.transition = "150ms";
+  slider.style.transform = `translateX(-${
+    (boxWidth + 30) * (clonedLength / 2) +
+    (boxWidth + 30) * counter -
+    amountScrolled
+  }px)`;
+}
+
+function touchEnd(
+  slider,
+  amountScrolled,
+  clonedBoxs,
+  boxWidth,
+  sliderBoxs,
+  sliderIndex
+) {
+  touchStarted = false;
+  sliders[sliderIndex].style.cursor = "grab";
+  let boxsScrolled = Math.round(amountScrolled / boxWidth);
+  if (boxsScrolled) {}
+  if (boxsScrolled === 0) {
+    counters[sliderIndex]++;
+    slidePrev(slider, sliderBoxs, clonedBoxs)
+  } else if (boxsScrolled <= 0) {
+    slideNext(slider, sliderBoxs, clonedBoxs)
+  } else if (boxsScrolled >= 0) {
+    slidePrev(slider, sliderBoxs, clonedBoxs)
+  }
+}
+
+function slideAfterDelay(slider, sliderBoxs, clonedBoxs) {
+  let sliderIndex = slider.dataset.index;
+  return function (timestamp) {
+    if (timestamp - prevTime >= 6000) {
+      slideNext(slider, sliderBoxs, clonedBoxs);
+      if (sliderIndex == sliders.length - 1) {
+        prevTime = timestamp;
+      }
+    }
+    requestAnimationFrame(slideAfterDelay(slider, sliderBoxs, clonedBoxs));
+  };
 }
 
 function fixSlider(slider, clonedLength, sliderIndex) {
   let boxWidth = slider.lastElementChild.getBoundingClientRect().width;
-  slider.scrollTo({
-    top: 0,
-    left:
-      (boxWidth + 30) * (clonedLength / 2) +
-      (boxWidth + 30) * counters[sliderIndex],
-  });
+  slider.style.transition = "0s";
+  slider.style.transform = `translateX(-${
+    (boxWidth + 30) * (clonedLength / 2) +
+    (boxWidth + 30) * counters[sliderIndex]
+  }px)`;
 }
 
 slideBtns.forEach((btn) => {
-  let slider = btn.parentElement;
+  let slider = btn.parentElement.querySelector(".slider");
   let sliderBoxs = slider.querySelectorAll(".box");
   let clonedBoxs = slider.querySelectorAll(".box.cloned");
   btn.addEventListener("click", () => {
     let boxWidth = slider.lastElementChild.getBoundingClientRect().width;
     if (btn.classList.contains("next")) {
-      slideNext(slider, sliderBoxs, clonedBoxs, boxWidth);
+      slideNext(slider, sliderBoxs, clonedBoxs);
     } else {
       slidePrev(slider, sliderBoxs, clonedBoxs);
     }
   });
 });
 
-function slideNext(slider, sliderBoxs, clonedBoxs, boxWidth) {
+function slideNext(slider, sliderBoxs, clonedBoxs) {
   let i = parseInt(slider.dataset.index);
   if (counters[i] !== sliderBoxs.length - clonedBoxs.length) {
+    slider.ontransitionend = () => {
+      return;
+    };
     counters[i]++;
-    scrollSlider(slider, clonedBoxs.length, counters[i], "smooth");
+    scrollSlider(slider, clonedBoxs.length, counters[i], "0.3s");
   }
   if (counters[i] === sliderBoxs.length - clonedBoxs.length) {
-    let waiter = setInterval(() => {
-      if (
-        Math.round(slider.scrollLeft) ===
-          Math.round(
-            (boxWidth + 30) * (sliderBoxs.length - clonedBoxs.length / 2)
-          ) ||
-        Math.round(slider.scrollLeft) -
-          Math.round(
-            (boxWidth + 30) * (sliderBoxs.length - clonedBoxs.length / 2)
-          ) ===
-          1 ||
-        Math.round(
-          (boxWidth + 30) * (sliderBoxs.length - clonedBoxs.length / 2)
-        ) -
-          Math.round(slider.scrollLeft) ===
-          1
-      ) {
-        counters[i] = 0;
-        scrollSlider(slider, clonedBoxs.length, counters[i], "auto");
-        if (i === 1) {
-          checkBulletsActivity(slider);
-        }
-        clearInterval(waiter);
-      }
-    }, 1);
+    slider.ontransitionend = () => {
+      counters[i] = 0;
+      scrollSlider(slider, clonedBoxs.length, counters[i], "0s");
+      return;
+    };
   }
 }
 
 function slidePrev(slider, sliderBoxs, clonedBoxs) {
   let i = parseInt(slider.dataset.index);
   if (counters[i] !== -(clonedBoxs.length / 2)) {
+    slider.ontransitionend = () => {
+      return;
+    };
     counters[i]--;
-    scrollSlider(slider, clonedBoxs.length, counters[i], "smooth");
+    scrollSlider(slider, clonedBoxs.length, counters[i], "0.3s");
   }
   if (counters[i] === -(clonedBoxs.length / 2)) {
-    let waiter = setInterval(() => {
-      if (slider.scrollLeft === 0) {
-        counters[i] =
-          sliderBoxs.length - clonedBoxs.length - clonedBoxs.length / 2;
-        scrollSlider(slider, clonedBoxs.length, counters[i], "auto");
-        if (i === 1) {
-          checkBulletsActivity(slider);
-        }
-        clearInterval(waiter);
-      }
-    }, 1);
+    slider.ontransitionend = () => {
+      counters[i] =
+        sliderBoxs.length - clonedBoxs.length - clonedBoxs.length / 2;
+      scrollSlider(slider, clonedBoxs.length, counters[i], "0s");
+    };
   }
 }
 
-function scrollSlider(slider, clonedLength, counter, behavior) {
+function scrollSlider(slider, clonedLength, counter, transition) {
+  slider.style.transition = transition;
   let boxWidth = slider.lastElementChild.getBoundingClientRect().width;
-  console.log((boxWidth + 30) * (clonedLength / 2) + (boxWidth + 30) * counter)
-  slider.scrollTo({
-    top: 0,
-    left: (boxWidth + 30) * (clonedLength / 2) + (boxWidth + 30) * counter,
-    behavior: behavior,
-  });
+  slider.style.transform = `translateX(-${
+    (boxWidth + 30) * (clonedLength / 2) + (boxWidth + 30) * counter
+  }px)`;
 }
 
 // Make bullets
@@ -160,6 +225,9 @@ window.addEventListener("resize", () => {
     sliderTarget.lastElementChild.getBoundingClientRect().width;
   addBullets(sliderTarget, sliderTargetBoxWidth, bullets);
   handleBulletsClicked();
+});
+
+sliderTarget.addEventListener("transitionend", () => {
   checkBulletsActivity(sliderTarget);
 });
 
@@ -168,11 +236,13 @@ function handleBulletsClicked() {
   Array.from(bullets.children).forEach((bullet) => {
     bullet.addEventListener("click", () => {
       bulletClicked(sliderTarget, bullet);
-      checkBulletsActivity(sliderTarget);
     });
   });
 }
-Array.from(sliderTarget.querySelectorAll(".btn")).forEach((btn) => {
+
+Array.from(
+  sliderTarget.parentElement.parentElement.querySelectorAll(".btn")
+).forEach((btn) => {
   btn.addEventListener("click", () => {
     checkBulletsActivity(sliderTarget);
   });
@@ -197,8 +267,10 @@ function bulletClicked(slider, bullet) {
   let clonedBoxs = slider.querySelectorAll(".box.cloned");
   let sliderIndex = slider.dataset.index;
   counters[sliderIndex] = bullet.dataset.index;
-  scrollSlider(slider, clonedBoxs.length, counters[sliderIndex], "smooth");
+  scrollSlider(slider, clonedBoxs.length, counters[sliderIndex], "0.3s");
+  checkBulletsActivity(slider);
 }
+
 function checkBulletsActivity(slider) {
   let bullets = slider.nextElementSibling;
   let sliderIndex = slider.dataset.index;
@@ -267,7 +339,6 @@ function increamentNums(nodeListOfNums) {
   nodeListOfNums.forEach((nodeNum, index) => {
     let increament = (function (nodeNum) {
       let prevIncreamentTime = 0;
-      console.log(nodeNum);
       const target = parseInt(nodeNum.dataset.tar);
       return function (duration) {
         endIncreament(increamenter);

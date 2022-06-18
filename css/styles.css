@@ -46,16 +46,22 @@ a {
     width: 1170px;
   }
 }
-.slider-container {
+.btns-container {
   position: relative;
 }
-.slider {
+.slider-container {
   overflow: hidden;
+}
+.slider {
   max-width: 100%;
   display: flex;
   justify-content: flex-start;
+  transform: translateX(0px);
+  transition: var(--main-transition);
+  user-select: none;
+  cursor: grab;
 }
-.slider .btn {
+.btns-container .btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -69,27 +75,28 @@ a {
   justify-content: center;
   border-radius: 50%;
   cursor: pointer;
+  z-index: 9999;
 }
 @media (max-width: 575px) {
-  .slider .btn {
+  .btns-container .btn {
     width: 35px;
     height: 35px;
     font-size: 20px;
   }
 }
-.slider .btn.next {
+.btns-container .btn.next {
   right: 0;
   transform: translate(50%, -50%);
 }
-.slider .btn.prev {
+.btns-container .btn.prev {
   left: 0;
   transform: translate(-50%, -50%);
 }
 @media (max-width: 800px) {
-  .slider .btn.next {
+  .btns-container .btn.next {
     transform: translate(-20%, -50%);
   }
-  .slider .btn.prev {
+  .btns-container .btn.prev {
     transform: translate(20%, -50%);
   }
 }
@@ -124,6 +131,13 @@ a {
 .sub-header .text span {
   color: var(--secondary-color);
 }
+.sub-header .social i {
+  cursor: pointer;
+  transition: var(--main-transition);
+}
+.sub-header .social i:hover {
+  color: var(--secondary-color);
+}
 .sub-header .social i:not(:last-child) {
   margin-right: 18px;
 }
@@ -138,7 +152,7 @@ header {
   text-transform: uppercase;
 }
 @media (max-width: 767px) {
-  header.fixed ,
+  header.fixed,
   header {
     background-color: #f7f7f7;
     color: black;
@@ -156,7 +170,7 @@ header .logo a {
   letter-spacing: 2px;
 }
 @media (max-width: 767px) {
-  header.fixed a ,
+  header.fixed a,
   header .logo a {
     color: black;
   }
@@ -1033,12 +1047,12 @@ header.fixed a {
     display: flex;
     justify-content: center;
     flex-direction: column;
-    align-items: center;  
+    align-items: center;
   }
 }
 @media (max-width: 550px) {
   .contact .contact-info {
-    max-width: 100%; 
+    max-width: 100%;
     min-width: fit-content;
   }
 }
