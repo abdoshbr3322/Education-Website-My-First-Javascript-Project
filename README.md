@@ -1,4 +1,4 @@
 # Education-Website-My-First-Javascript-Project
   Website Preview 
 ----------
-  <a href="https://github.com/abdoshbr3322/Education-Website-My-First-Javascript-Project">Education-Website</a>
+  <a href="https://abdoshbr3322.github.io/Education-Website-My-First-Javascript-Project/">Education-Website</a>
